@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🙈 เกมกดเวลาแบบซ่อน (Blind Challenge)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #181528, #2a2247, #131224);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: clamp(10px, 2vh, 24px);
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            background: rgba(20, 20, 35, 0.7);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: clamp(18px, 3vw, 32px);
+            padding: clamp(18px, 3vh, 36px) clamp(20px, 4vw, 48px);
+            width: min(1400px, 96vw);
+            min-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+            position: relative;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .top-nav-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: #a1c4fd;
+            font-size: clamp(12px, 1.2vw, 14px);
+            background: rgba(161, 196, 253, 0.15);
+            padding: 6px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(161, 196, 253, 0.35);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-link:hover { background: rgba(161, 196, 253, 0.25); }
+
+        .nav-home {
+            background: rgba(255, 215, 0, 0.12);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            font-weight: 600;
+        }
+        .nav-home:hover {
+            background: rgba(255, 215, 0, 0.25);
+            color: #fff;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .top-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffd700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: clamp(12px, 1.2vw, 13.5px);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .top-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .top-btn.muted { color: #888; }
+
+        .header-title-box {
+            margin: 4px 0 10px;
+        }
+        h1 {
+            font-size: clamp(24px, 3vw, 36px);
+            margin-bottom: 2px;
+            background: linear-gradient(90deg, #ff9a9e, #fecfef, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #ccc;
+            font-size: clamp(12px, 1.3vw, 15px);
+        }
+
+        /* Target Card */
+        .target-card {
+            background: rgba(255, 215, 0, 0.08);
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 20px;
+            padding: clamp(10px, 1.8vh, 18px) clamp(16px, 2vw, 28px);
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .target-card.highlight {
+            border-color: rgba(255, 215, 0, 0.95);
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.35);
+        }
+        .target-title {
+            font-size: clamp(12px, 1.2vw, 14px);
+            color: #ffd93d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 2px;
+        }
+        .target-value {
+            font-size: clamp(38px, 6vw, 68px);
+            font-weight: 900;
+            color: #ffd700;
+            font-family: 'Consolas', 'Courier New', monospace;
+            line-height: 1.1;
+            text-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+        }
+        .target-value .unit {
+            font-size: clamp(18px, 2.5vw, 28px);
+            color: #ffd93d;
+            font-weight: normal;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin-left: 6px;
+        }
+        .target-sub {
+            font-size: clamp(12px, 1.2vw, 14px);
+            color: #bbb;
+            margin-top: 3px;
+            min-height: 18px;
+        }
+
+        /* Timer Box: ขยายเต็มจอ */
+        .timer-box {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 24px;
+            padding: clamp(15px, 3vh, 35px) 15px;
+            margin: 12px 0;
+            border: 3px solid rgba(0, 229, 255, 0.4);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            min-height: clamp(160px, 28vh, 340px);
+        }
+        .timer-box.hidden-mode {
+            border-color: rgba(255, 75, 43, 0.7);
+            background: rgba(35, 10, 20, 0.7);
+            box-shadow: inset 0 0 50px rgba(255, 75, 43, 0.25), 0 0 40px rgba(255, 75, 43, 0.35);
+        }
+
+        /* ตัวเลขนับเวลา ใหญ่พิเศษ เต็มจอ User */
+        .timer-value {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: clamp(90px, 22vw, 26vh);
+            font-weight: 900;
+            color: #00e5ff;
+            transition: color 0.25s;
+            line-height: 0.95;
+            letter-spacing: -2px;
+            text-shadow: 0 0 45px rgba(0, 229, 255, 0.45);
+        }
+        .timer-value.blind {
+            color: #ff6b6b;
+            letter-spacing: 6px;
+            text-shadow: 0 0 45px rgba(255, 107, 107, 0.5);
+        }
+        .timer-label {
+            color: #888;
+            font-size: clamp(12px, 1.3vw, 15px);
+            margin-top: 6px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .blind-alert {
+            font-size: clamp(13px, 1.3vw, 16px);
+            color: #ff9a9e;
+            font-weight: 600;
+            margin-top: 6px;
+            min-height: 20px;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin: 14px 0 10px;
+        }
+        .btn {
+            padding: clamp(12px, 2vh, 18px) clamp(24px, 3.5vw, 44px);
+            border: none;
+            border-radius: 16px;
+            font-size: clamp(16px, 1.8vw, 22px);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-main {
+            min-width: clamp(240px, 32vw, 420px);
+            color: #fff;
+        }
+        .btn-main.state-start {
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            box-shadow: 0 6px 25px rgba(76, 175, 80, 0.45);
+        }
+        .btn-main.state-start:hover { box-shadow: 0 8px 32px rgba(76, 175, 80, 0.65); }
+
+        .btn-main.state-stop {
+            background: linear-gradient(135deg, #e94560, #ff6b81);
+            box-shadow: 0 6px 25px rgba(233, 69, 96, 0.45);
+        }
+        .btn-main.state-stop:hover { box-shadow: 0 8px 32px rgba(233, 69, 96, 0.65); }
+
+        .btn-main.state-next {
+            background: linear-gradient(135deg, #4361ee, #4895ef);
+            box-shadow: 0 6px 25px rgba(67, 97, 238, 0.45);
+        }
+        .btn-main.state-next:hover { box-shadow: 0 8px 32px rgba(67, 97, 238, 0.65); }
+
+        .btn-reroll {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #eee;
+            padding: clamp(12px, 2vh, 18px) clamp(16px, 2vw, 24px);
+            border-radius: 16px;
+            font-size: clamp(14px, 1.4vw, 17px);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-reroll:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffd700;
+        }
+
+        /* Result */
+        .result {
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 6px 0;
+        }
+        .result-emoji {
+            font-size: clamp(34px, 4.5vw, 52px);
+            margin-bottom: 2px;
+        }
+        .result-text {
+            font-size: clamp(16px, 2vw, 24px);
+            font-weight: bold;
+            line-height: 1.4;
+        }
+        .result-detail {
+            font-size: clamp(12.5px, 1.3vw, 16px);
+            color: #ccc;
+            margin-top: 3px;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 16px;
+            padding: clamp(10px, 1.5vh, 16px);
+            margin: 8px 0;
+        }
+        .stat-item { text-align: center; }
+        .stat-value {
+            font-size: clamp(18px, 2.2vw, 26px);
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .stat-label {
+            font-size: clamp(11px, 1.1vw, 13px);
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* History Table */
+        .history-box {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 14px;
+            padding: 8px 16px;
+            margin-top: 6px;
+            text-align: left;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: clamp(11px, 1.1vw, 13px);
+            color: #888;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .history-list {
+            list-style: none;
+            max-height: 80px;
+            overflow-y: auto;
+            font-size: clamp(11.5px, 1.15vw, 13.5px);
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-item span.diff-good { color: #00e676; font-weight: bold; }
+        .history-item span.diff-mid { color: #ffab00; }
+        .history-item span.diff-bad { color: #ff5252; }
+
+        .hint {
+            color: #888;
+            font-size: clamp(11px, 1.1vw, 13px);
+            margin-top: 8px;
+        }
+        .hint kbd {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: clamp(10px, 1vw, 12px);
+            color: #ccc;
+        }
+
+        @keyframes pulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.03); } }
+        .pulse { animation: pulse 0.8s ease-in-out infinite; }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.12); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in { animation: popIn 0.35s ease-out; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="top-bar">
+        <div class="top-nav-group">
+            <a href="index.html" class="nav-link nav-home">🏠 หน้าแรก</a>
+            <a href="timing_game.html" class="nav-link">🎯 ไปโหมดปกติ (เห็นเวลาตลอด) ➜</a>
+        </div>
+        <div class="top-actions">
+            <button class="top-btn" id="btnFullscreen" onclick="toggleFullscreen()" title="เปิดเต็มจอ">⛶ เต็มจอ</button>
+            <button class="sound-btn top-btn" id="btnSound" onclick="toggleSound()">🔊 เสียง: เปิด</button>
+        </div>
+    </div>
+
+    <div class="header-title-box">
+        <h1>🙈 เกมกดเวลาแบบซ่อน (Blind)</h1>
+        <p class="subtitle">เวลาจะเดินให้ดู 3 วินาทีแรก แล้วจะซ่อนตัวเลข! ต้องนับจังหวะในใจ</p>
+    </div>
+
+    <!-- Target Card: แสดงเป้าหมายให้เห็นก่อนเริ่มเสมอ -->
+    <div class="target-card" id="targetCard">
+        <div class="target-title">🎯 เวลาเป้าหมายรอบนี้</div>
+        <div class="target-value">
+            <span id="targetNum">--.-</span><span class="unit">วินาที</span>
+        </div>
+        <div class="target-sub" id="targetSub">พร้อมแล้วกด "เริ่มจับเวลา" หรือ Enter</div>
+    </div>
+
+    <!-- Timer Box: ขนาดใหญ่เต็มจอ -->
+    <div class="timer-box" id="timerBox">
+        <div class="timer-value" id="timer">0.0</div>
+        <div class="timer-label">วินาที</div>
+        <div class="blind-alert" id="blindAlert">👀 ตัวเลขจะมองเห็นถึง 3.0 วินาที</div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+        <button class="btn btn-main state-start" id="btnMain" onclick="handleAction()">▶ เริ่มจับเวลา (Enter)</button>
+        <button class="btn btn-reroll" id="btnReroll" onclick="rerollTarget()" title="สุ่มเวลาเป้าหมายใหม่">🎲 สุ่มใหม่</button>
+    </div>
+
+    <!-- Result -->
+    <div class="result">
+        <div class="result-emoji" id="resultEmoji"></div>
+        <div class="result-text" id="resultText"></div>
+        <div class="result-detail" id="resultDetail"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="statRound">0</div>
+            <div class="stat-label">รอบสะสม</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="statBest">-</div>
+            <div class="stat-label">🏆 สถิติดีสุด</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="statAvg">-</div>
+            <div class="stat-label">เฉลี่ย</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="statAcc">-</div>
+            <div class="stat-label">🎯 แม่นยำ</div>
+        </div>
+    </div>
+
+    <!-- History Log -->
+    <div class="history-box" id="historyBox" style="display:none;">
+        <div class="history-header">
+            <span>ประวัติการกดล่าสุด (บันทึกอัตโนมัติ)</span>
+            <span style="cursor:pointer; color:#ffd700;" onclick="resetStats()">รีเซ็ตสถิติ</span>
+        </div>
+        <div class="history-list" id="historyList"></div>
+    </div>
+
+    <p class="hint">💡 กด <kbd>Enter</kbd> หรือ <kbd>Space</kbd> เพื่อควบคุมเกมได้ตลอด หรือกด <kbd>F11</kbd> เพื่อเปิดเต็มจอ!</p>
+</div>
+
+<script>
+    // ── Persistent Storage Key ──
+    const STORAGE_KEY = 'timing_game_blind_data';
+
+    // ── State ──
+    let gameState = 'READY'; // 'READY' | 'RUNNING' | 'STOPPED'
+    let startTime = 0;
+    let targetTime = 0;
+    let elapsed = 0;
+    let animId = null;
+    let roundNum = 0;
+    let bestDiff = Infinity;
+    let history = [];
+    let historyRecords = [];
+    let soundEnabled = true;
+    let isHidden = false;
+
+    // ── Web Audio API ──
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.1, gainVal = 0.1) {
+        if (!soundEnabled) return;
+        try {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+    }
+
+    function playFanfare() {
+        if (!soundEnabled) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+            setTimeout(() => playTone(freq, 'triangle', 0.18, 0.15), idx * 90);
+        });
+    }
+
+    function toggleSound() {
+        soundEnabled = !soundEnabled;
+        const btn = document.getElementById('btnSound');
+        if (soundEnabled) {
+            btn.textContent = '🔊 เสียง: เปิด';
+            btn.classList.remove('muted');
+            playTone(600, 'sine', 0.1, 0.1);
+        } else {
+            btn.textContent = '🔇 เสียง: ปิด';
+            btn.classList.add('muted');
+        }
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+            document.getElementById('btnFullscreen').textContent = '🗗 ย่อจอ';
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            document.getElementById('btnFullscreen').textContent = '⛶ เต็มจอ';
+        }
+    }
+
+    // ── DOM Refs ──
+    const elTargetCard   = document.getElementById('targetCard');
+    const elTargetNum    = document.getElementById('targetNum');
+    const elTargetSub    = document.getElementById('targetSub');
+    const elTimer        = document.getElementById('timer');
+    const elTimerBox     = document.getElementById('timerBox');
+    const elBlindAlert   = document.getElementById('blindAlert');
+    const elBtnMain      = document.getElementById('btnMain');
+    const elBtnReroll    = document.getElementById('btnReroll');
+    const elResultEmoji  = document.getElementById('resultEmoji');
+    const elResultText   = document.getElementById('resultText');
+    const elResultDetail = document.getElementById('resultDetail');
+    const elStatRound    = document.getElementById('statRound');
+    const elStatBest     = document.getElementById('statBest');
+    const elStatAvg      = document.getElementById('statAvg');
+    const elStatAcc      = document.getElementById('statAcc');
+    const elHistoryBox   = document.getElementById('historyBox');
+    const elHistoryList  = document.getElementById('historyList');
+
+    // ── บันทึกและโหลดสถิติลง LocalStorage ถาวร ──
+    function saveStats() {
+        try {
+            const data = {
+                roundNum,
+                bestDiff: bestDiff === Infinity ? null : bestDiff,
+                history,
+                historyRecords
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {}
+    }
+
+    function loadStats() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            if (data) {
+                roundNum = data.roundNum || 0;
+                bestDiff = (data.bestDiff !== null && data.bestDiff !== undefined) ? data.bestDiff : Infinity;
+                history = Array.isArray(data.history) ? data.history : [];
+                historyRecords = Array.isArray(data.historyRecords) ? data.historyRecords : [];
+
+                elStatRound.textContent = roundNum;
+                if (bestDiff !== Infinity) {
+                    elStatBest.textContent = bestDiff.toFixed(1) + 's';
+                }
+                if (history.length > 0) {
+                    const avg = history.reduce((a, b) => a + b, 0) / history.length;
+                    elStatAvg.textContent = (Math.round(avg * 10) / 10).toFixed(1) + 's';
+                    const lastTarget = historyRecords[0]?.target || 7.0;
+                    const lastDiff = history[history.length - 1];
+                    const acc = Math.max(0, Math.round((1 - (lastDiff / lastTarget)) * 100));
+                    elStatAcc.textContent = acc + '%';
+                }
+                renderHistory();
+            }
+        } catch (e) {}
+    }
+
+    function renderHistory() {
+        if (historyRecords.length === 0) {
+            elHistoryBox.style.display = 'none';
+            return;
+        }
+        elHistoryBox.style.display = 'block';
+        elHistoryList.innerHTML = historyRecords.map(item => {
+            const cls = item.diff <= 0.2 ? 'diff-good' : (item.diff <= 0.8 ? 'diff-mid' : 'diff-bad');
+            return `<div class="history-item">
+                <span>รอบ ${item.r}: เป้า ${item.target.toFixed(1)}s ➜ กด ${item.stopped.toFixed(1)}s</span>
+                <span class="${cls}">${item.emoji} ต่าง ${item.diff.toFixed(1)}s</span>
+            </div>`;
+        }).join('');
+    }
+
+    // ── สุ่มเวลา 5.0 - 10.0 ทศนิยม 1 ตำแหน่ง ──
+    function getRandomTarget() {
+        const min = 50;  // 5.0
+        const max = 100; // 10.0
+        const randInt = Math.floor(Math.random() * (max - min + 1)) + min;
+        return randInt / 10;
+    }
+
+    // ── เตรียมรอบใหม่ ──
+    function prepareRound(keepResult = false) {
+        gameState = 'READY';
+        isHidden = false;
+        targetTime = getRandomTarget();
+
+        elTargetNum.textContent = targetTime.toFixed(1);
+        elTargetSub.textContent = `เป้าหมายคือ ${targetTime.toFixed(1)} วินาที — พร้อมแล้วกดเริ่มเลย!`;
+        elTargetCard.classList.remove('highlight');
+
+        elTimer.textContent = '0.0';
+        elTimer.className = 'timer-value';
+        elTimer.style.color = '#00e5ff';
+        elTimerBox.className = 'timer-box';
+        elBlindAlert.textContent = '👀 ตัวเลขจะมองเห็นถึง 3.0 วินาที';
+
+        elBtnMain.textContent = '▶ เริ่มจับเวลา (Enter)';
+        elBtnMain.className = 'btn btn-main state-start';
+        elBtnReroll.disabled = false;
+
+        if (!keepResult) {
+            elResultEmoji.textContent = '';
+            elResultText.textContent = '';
+            elResultDetail.textContent = '';
+        }
+
+        elTargetNum.classList.add('pop-in');
+        setTimeout(() => elTargetNum.classList.remove('pop-in'), 350);
+    }
+
+    // สุ่มเป้าหมายใหม่ก่อนเริ่ม
+    function rerollTarget() {
+        if (gameState !== 'READY') return;
+        targetTime = getRandomTarget();
+        elTargetNum.textContent = targetTime.toFixed(1);
+        elTargetSub.textContent = `เปลี่ยนเป็น ${targetTime.toFixed(1)} วินาทีแล้ว — พร้อมแล้วกดเริ่ม!`;
+        playTone(450, 'sine', 0.08, 0.08);
+        elTargetNum.classList.add('pop-in');
+        setTimeout(() => elTargetNum.classList.remove('pop-in'), 350);
+    }
+
+    // ── เริ่มจับเวลา ──
+    function startTimer() {
+        gameState = 'RUNNING';
+        isHidden = false;
+        roundNum++;
+        elStatRound.textContent = roundNum;
+
+        playTone(550, 'sine', 0.12, 0.15);
+
+        elTargetSub.textContent = `🎯 กำลังจับเวลา... กด STOP ให้ตรง ${targetTime.toFixed(1)} วินาที!`;
+        elTargetCard.classList.add('highlight');
+
+        elBtnMain.textContent = '⏹ STOP! (Enter)';
+        elBtnMain.className = 'btn btn-main state-stop pulse';
+        elBtnReroll.disabled = true;
+
+        elResultEmoji.textContent = '';
+        elResultText.textContent = '';
+        elResultDetail.textContent = '';
+
+        startTime = performance.now();
+        tick();
+    }
+
+    // ── Loop นับเวลา (หายไปหลัง 3.0 วินาที) ──
+    function tick() {
+        if (gameState !== 'RUNNING') return;
+
+        elapsed = (performance.now() - startTime) / 1000;
+
+        // หลังจาก 3.0 วินาที ให้ซ่อนเวลา
+        if (elapsed >= 3.0) {
+            if (!isHidden) {
+                isHidden = true;
+                elTimer.textContent = '??.?';
+                elTimer.className = 'timer-value blind pop-in';
+                elTimerBox.className = 'timer-box hidden-mode';
+                elBlindAlert.textContent = '🙈 ซ่อนเวลาแล้ว! ใช้จังหวะในใจแล้วกด STOP';
+                playTone(350, 'square', 0.1, 0.08);
+            }
+        } else {
+            // ช่วง 0.0 - 3.0 แสดงตามปกติ
+            elTimer.textContent = elapsed.toFixed(1);
+        }
+
+        animId = requestAnimationFrame(tick);
+    }
+
+    // ── หยุดเวลา ──
+    function stopTimer() {
+        if (gameState !== 'RUNNING') return;
+        gameState = 'STOPPED';
+        cancelAnimationFrame(animId);
+
+        elapsed = (performance.now() - startTime) / 1000;
+        const stoppedTime = Math.round(elapsed * 10) / 10;
+
+        // แสดงเวลาจริงที่หยุดได้
+        elTimer.textContent = stoppedTime.toFixed(1);
+        elTimer.className = 'timer-value';
+        elTimer.style.color = '#ffffff';
+        elTimerBox.className = 'timer-box';
+        elBlindAlert.textContent = '✨ เปิดเผยเวลาที่แท้จริงแล้ว!';
+
+        elTargetCard.classList.remove('highlight');
+        elTargetSub.textContent = `จบแล้ว! กด "รอบถัดไป" หรือ Enter เพื่อสุ่มเป้าหมายใหม่`;
+
+        elBtnMain.textContent = '▶ รอบถัดไป (Enter)';
+        elBtnMain.className = 'btn btn-main state-next';
+        elBtnReroll.disabled = true;
+
+        // คำนวณความต่าง ทศนิยม 1 ตำแหน่ง
+        const diff = Math.abs(stoppedTime - targetTime);
+        const diffRounded = Math.round(diff * 10) / 10;
+        history.push(diffRounded);
+
+        // คำนวณความแม่นยำ %
+        const acc = Math.max(0, Math.round((1 - (diffRounded / targetTime)) * 100));
+
+        // สถิติ
+        if (diffRounded < bestDiff) bestDiff = diffRounded;
+        elStatBest.textContent = bestDiff.toFixed(1) + 's';
+        const avg = history.reduce((a, b) => a + b, 0) / history.length;
+        elStatAvg.textContent = (Math.round(avg * 10) / 10).toFixed(1) + 's';
+        elStatAcc.textContent = acc + '%';
+
+        // เสียงตามความแม่นยำ
+        if (diffRounded === 0) {
+            playFanfare();
+        } else if (diffRounded <= 0.2) {
+            playTone(880, 'triangle', 0.2, 0.15);
+        } else if (diffRounded <= 0.6) {
+            playTone(550, 'sine', 0.15, 0.12);
+        } else {
+            playTone(220, 'sawtooth', 0.25, 0.12);
+        }
+
+        // ทิศทาง
+        let direction = '';
+        if (diffRounded === 0) {
+            direction = 'ตรงเป๊ะ! 🎯';
+        } else if (stoppedTime < targetTime) {
+            direction = 'เร็วไป ⏩';
+        } else {
+            direction = 'ช้าไป ⏪';
+        }
+
+        let emoji, msg, color;
+        if (diffRounded === 0) {
+            emoji = '🎯'; msg = 'สุดยอดเหนือมนุษย์! ตรงเป๊ะเลย!'; color = '#ffd700';
+        } else if (diffRounded <= 0.1) {
+            emoji = '🏆'; msg = `เทพมาก! ตาบอดยังห่างแค่ ${diffRounded.toFixed(1)} วินาที`; color = '#ffd700';
+        } else if (diffRounded <= 0.3) {
+            emoji = '🔥'; msg = `จังหวะเป๊ะมาก! ห่าง ${diffRounded.toFixed(1)} วินาที`; color = '#00e676';
+        } else if (diffRounded <= 0.5) {
+            emoji = '👍'; msg = `เก่งเลย! ห่าง ${diffRounded.toFixed(1)} วินาที`; color = '#00e676';
+        } else if (diffRounded <= 1.0) {
+            emoji = '😊'; msg = `ไม่เลว! ห่าง ${diffRounded.toFixed(1)} วินาที`; color = '#ffab00';
+        } else if (diffRounded <= 2.0) {
+            emoji = '😅'; msg = `พอใช้ได้! ห่าง ${diffRounded.toFixed(1)} วินาที`; color = '#ffab00';
+        } else {
+            emoji = '💤'; msg = `หลุดจังหวะไป ${diffRounded.toFixed(1)} วินาที`; color = '#ff1744';
+        }
+
+        elResultEmoji.textContent = emoji;
+        elResultEmoji.classList.add('pop-in');
+        setTimeout(() => elResultEmoji.classList.remove('pop-in'), 350);
+
+        elResultText.textContent = `${msg} (${direction})`;
+        elResultText.style.color = color;
+        elResultDetail.textContent = `เป้าหมาย: ${targetTime.toFixed(1)}s  |  คุณกด: ${stoppedTime.toFixed(1)}s  |  ห่าง: ${diffRounded.toFixed(1)}s (แม่นยำ ${acc}%)`;
+
+        // บันทึกลงประวัติและเซฟถาวร
+        addHistory(roundNum, targetTime, stoppedTime, diffRounded, emoji);
+    }
+
+    function addHistory(r, target, stopped, diff, emoji) {
+        historyRecords.unshift({ r, target, stopped, diff, emoji });
+        if (historyRecords.length > 5) historyRecords.pop();
+        renderHistory();
+        saveStats();
+    }
+
+    function resetStats() {
+        if (!confirm('ต้องการล้างสถิติการเล่นทั้งหมดของโหมดนี้ใช่หรือไม่?')) return;
+        history = [];
+        historyRecords = [];
+        roundNum = 0;
+        bestDiff = Infinity;
+        localStorage.removeItem(STORAGE_KEY);
+        elStatRound.textContent = '0';
+        elStatBest.textContent = '-';
+        elStatAvg.textContent = '-';
+        elStatAcc.textContent = '-';
+        elHistoryBox.style.display = 'none';
+        prepareRound(false);
+    }
+
+    // ── ควบคุมหลัก (Enter / ปุ่ม) ──
+    function handleAction() {
+        if (gameState === 'READY') {
+            startTimer();
+        } else if (gameState === 'RUNNING') {
+            stopTimer();
+        } else if (gameState === 'STOPPED') {
+            prepareRound(false);
+        }
+    }
+
+    // ── คีย์บอร์ด: กด Enter หรือ Space ควบคุมเกมได้ตลอด ──
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Enter' || e.code === 'Space') {
+            e.preventDefault();
+            handleAction();
+        }
+    });
+
+    // ── โหลดสถิติเดิม และเริ่มต้นเป้าหมาย ──
+    loadStats();
+    prepareRound();
+</script>
+
+</body>
+</html>
